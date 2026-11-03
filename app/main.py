@@ -1,17 +1,24 @@
-from fastapi import FastAPI, HTTPException
+from fastapi.staticfiles import StaticFiles
+from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
-from datetime import datetime
-import json
 
-# Import the Mock Vector Database class verified in your code workspace
-from vector_db import MockVectorDB
+from app.config import FRONTEND_DIR, get_settings
+# Keyword-matching playbook store; replaced by Qdrant retrieval in Phase 2
+from app.rag.mock_store import MockVectorDB
 
 app = FastAPI(title="Sentinel-Ops Gateway", description="Log Ingestion Gateway with Integrated RAG & Observability Control Center")
-
+app.mount("/ui", StaticFiles(directory=FRONTEND_DIR, html=True), name="frontend")
 # Initialize our simulated vector database
 vector_store = MockVectorDB()
 received_logs = []
+
+def console(text: str) -> None:
+    """Terminal output must never fail a request, e.g. emoji on a non-UTF-8 Windows stdout."""
+    try:
+        print(text)
+    except UnicodeEncodeError:
+        print(text.encode("ascii", "replace").decode("ascii"))
 
 class SystemLog(BaseModel):
     timestamp: str
@@ -31,7 +38,7 @@ def read_root():
 
 @app.post("/ingest")
 def ingest_log(log: SystemLog):
-    log_data = log.dict()
+    log_data = log.model_dump()
     
     # 1. Automated RAG Pipeline: Query the Vector DB using the error message
     playbook = vector_store.search(log.message)
@@ -59,13 +66,13 @@ def ingest_log(log: SystemLog):
         color = "\033[91m" # Red
     reset = "\033[0m"
     
-    print(f"\n⚡ {color}[INGESTED - {log.severity}]{reset} From: {log.service_name} | Node: {log.infrastructure_id}")
-    print(f"   Message: {log.message}")
+    console(f"\n⚡ {color}[INGESTED - {log.severity}]{reset} From: {log.service_name} | Node: {log.infrastructure_id}")
+    console(f"   Message: {log.message}")
     if playbook:
-        print(f"   ✅ {color}MATCH FOUND:{reset} Playbook Topic: '{playbook['topic']}'")
+        console(f"   ✅ {color}MATCH FOUND:{reset} Playbook Topic: '{playbook['topic']}'")
     else:
-        print("   ❌ No direct matching mitigation playbook found.")
-    print("-" * 65)
+        console("   ❌ No direct matching mitigation playbook found.")
+    console("-" * 65)
     
     return {
         "status": "success", 
@@ -181,7 +188,7 @@ def show_dashboard():
                 <div id="logs-container" class="flex-1 overflow-y-auto space-y-4 max-h-[600px] pr-2">
                     <div id="no-logs" class="h-full flex flex-col items-center justify-center text-slate-500 py-12 gap-3">
                         <i data-lucide="terminal" class="w-12 h-12 stroke-1"></i>
-                        <p class="text-sm">Start your log stream generator (`generator.py`) to see real-time data flow.</p>
+                        <p class="text-sm">Start your log stream generator (`scripts/generate_alerts.py`) to see real-time data flow.</p>
                     </div>
                 </div>
             </section>
@@ -282,4 +289,5 @@ def show_dashboard():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("app:app", host="127.0.0.1", port=8000, reload=True)
+    settings = get_settings()
+    uvicorn.run("app.main:app", host=settings.app_host, port=settings.app_port, reload=settings.app_env == "development")
