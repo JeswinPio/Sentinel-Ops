@@ -1,13 +1,33 @@
+import logging
+from contextlib import asynccontextmanager
+
 from fastapi.staticfiles import StaticFiles
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI, HTTPException
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.health import router as health_router
 from app.config import FRONTEND_DIR, get_settings
+from app.database.connection import get_session
+from app.database.repositories import AuditRepository, IncidentRepository
+from app.observability.logging import RequestIdMiddleware, configure_logging
 # Keyword-matching playbook store; replaced by Qdrant retrieval in Phase 2
 from app.rag.mock_store import MockVectorDB
 
-app = FastAPI(title="Sentinel-Ops Gateway", description="Log Ingestion Gateway with Integrated RAG & Observability Control Center")
+logger = logging.getLogger("sentinel.ingest")
+
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    configure_logging(get_settings().log_level)
+    yield
+
+
+app = FastAPI(title="Sentinel-Ops Gateway", description="Log Ingestion Gateway with Integrated RAG & Observability Control Center", lifespan=lifespan)
+app.add_middleware(RequestIdMiddleware)
+app.include_router(health_router)
 app.mount("/ui", StaticFiles(directory=FRONTEND_DIR, html=True), name="frontend")
 # Initialize our simulated vector database
 vector_store = MockVectorDB()
@@ -37,9 +57,35 @@ def read_root():
     }
 
 @app.post("/ingest")
-def ingest_log(log: SystemLog):
+async def ingest_log(log: SystemLog, session: AsyncSession = Depends(get_session)):
     log_data = log.model_dump()
-    
+
+    # 0. Persist the raw alert and open an incident before anything else, so no alert is lost.
+    try:
+        incident, alert = await IncidentRepository(session).create_from_alert(
+            service=log.service_name,
+            infrastructure_id=log.infrastructure_id,
+            severity=log.severity,
+            source="ingest",
+            raw_payload=log_data,
+        )
+        AuditRepository(session).append(
+            actor="system:ingest",
+            action="incident.created",
+            incident_id=incident.id,
+            details={"alert_id": alert.id, "severity": log.severity},
+        )
+        await session.commit()
+    # asyncpg raises raw OSError (refused, timeout) on connect; SQLAlchemy does not wrap those.
+    except (SQLAlchemyError, OSError) as exc:
+        await session.rollback()
+        logger.error("alert.persist_failed", extra={"error": type(exc).__name__, "service_name": log.service_name})
+        raise HTTPException(status_code=503, detail="Incident store unavailable; alert not accepted.")
+
+    logger.info("incident.created", extra={"incident_id": incident.id, "alert_id": alert.id, "severity": log.severity})
+    log_data["incident_id"] = incident.id
+    log_data["alert_id"] = alert.id
+
     # 1. Automated RAG Pipeline: Query the Vector DB using the error message
     playbook = vector_store.search(log.message)
     
@@ -75,7 +121,9 @@ def ingest_log(log: SystemLog):
     console("-" * 65)
     
     return {
-        "status": "success", 
+        "status": "success",
+        "incident_id": incident.id,
+        "alert_id": alert.id,
         "mitigation_found": playbook is not None,
         "playbook_topic": log_data["playbook_topic"]
     }

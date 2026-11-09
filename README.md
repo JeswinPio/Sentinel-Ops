@@ -23,10 +23,33 @@ python -m venv .venv
 .venv\Scripts\activate          # Windows; use source .venv/bin/activate elsewhere
 pip install -r requirements-dev.txt
 copy .env.example .env          # then fill in values
-
-python -m uvicorn app.main:app --reload
-python scripts/generate_alerts.py --scenario database_disk --count 1
-pytest
 ```
 
-Dashboard: http://127.0.0.1:8000/dashboard
+### Dependencies (PostgreSQL + Qdrant)
+
+With Docker: `docker compose up -d` starts both with the credentials in `.env.example`.
+
+With a native PostgreSQL install instead, create the role and database once (as the `postgres` superuser):
+
+```sql
+CREATE ROLE sentinel LOGIN PASSWORD 'sentinel';
+CREATE DATABASE sentinel_ops OWNER sentinel;
+```
+
+Then apply the schema:
+
+```bash
+alembic upgrade head
+```
+
+### Start
+
+```bash
+python -m uvicorn app.main:app --reload
+python scripts/generate_alerts.py --scenario database_disk --count 1
+pytest                          # uses a temporary SQLite DB; no services needed
+```
+
+- Dashboard: http://127.0.0.1:8000/dashboard
+- Liveness: `/health` · Readiness (checks PostgreSQL + Qdrant): `/ready`
+- `/ingest` returns 503 when PostgreSQL is unreachable, so no alert is silently dropped.
