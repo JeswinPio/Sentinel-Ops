@@ -4,3 +4,7 @@ pydantic==2.13.4
 pydantic-settings==2.16.2
 langgraph==1.2.11
 requests==2.34.2
+httpx==0.28.1
+sqlalchemy[asyncio]==2.1.8
+asyncpg==0.32.0
+alembic==1.20.1
