@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sentinel-Ops | SRE Control Center</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen">
+    <header class="border-b border-slate-800 bg-slate-950">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-red-500/10 border border-red-500/30 flex items-center justify-center">
+                    <i data-lucide="shield-alert" class="text-red-400"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold">Sentinel-Ops</h1>
+                    <p class="text-xs text-slate-500">Autonomous SRE Control Center</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2 text-xs text-emerald-400">
+                <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                SYSTEM OPERATIONAL
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-6 py-8">
+        <div class="mb-7">
+            <h2 class="text-2xl font-bold">Incident Operations Dashboard</h2>
+            <p class="text-sm text-slate-500 mt-1">Real-time infrastructure monitoring, analysis and controlled remediation</p>
+        </div>
+
+        <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div class="card"><p class="label">Active Incidents</p><p class="metric">1</p><p class="hint">Currently processing</p></div>
+            <div class="card"><p class="label">Critical</p><p class="metric text-red-400">1</p><p class="hint">Requires attention</p></div>
+            <div class="card"><p class="label">Pending Approval</p><p class="metric text-amber-400">1</p><p class="hint">Human verification</p></div>
+            <div class="card"><p class="label">Resolved Today</p><p class="metric text-emerald-400">12</p><p class="hint">Successful resolutions</p></div>
+        </section>
+
+        <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="lg:col-span-2 space-y-6">
+
+                <div class="card p-0 overflow-hidden">
+                    <div class="section-head">
+                        <div>
+                            <h3 class="font-semibold">Active Incident</h3>
+                            <p class="text-xs text-slate-500 mt-1">INC-2026-0824-001</p>
+                        </div>
+                        <span class="badge-red">CRITICAL</span>
+                    </div>
+                    <div class="p-6">
+                        <div class="flex gap-4">
+                            <div class="icon-box red"><i data-lucide="database"></i></div>
+                            <div>
+                                <h4 class="text-lg font-semibold">PostgreSQL Database Disk Capacity</h4>
+                                <p class="text-sm text-slate-500 mt-1">postgresql-db-01</p>
+                            </div>
+                        </div>
+                        <div class="mt-5 rounded-lg bg-slate-950 border border-slate-800 p-4 font-mono text-sm text-red-300">
+                            disk_utilization_percent &gt; 95%
+                        </div>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+                            <div><p class="label">Service</p><p class="small-value">PostgreSQL</p></div>
+                            <div><p class="label">Severity</p><p class="small-value text-red-400">CRITICAL</p></div>
+                            <div><p class="label">Detected</p><p class="small-value">19:00:02</p></div>
+                            <div><p class="label">Status</p><p class="small-value text-amber-400">Awaiting Approval</p></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="section-head"><h3 class="font-semibold">AI Incident Analysis</h3><span class="text-xs text-emerald-400">94% confidence</span></div>
+                    <div class="p-6">
+                        <div class="flex gap-3 mb-4">
+                            <div class="icon-box blue"><i data-lucide="brain"></i></div>
+                            <div><p class="font-medium">Analyzer Agent</p><p class="text-xs text-slate-500">Analysis completed</p></div>
+                        </div>
+                        <p class="text-sm leading-6 text-slate-400">
+                            The database has exceeded the configured disk utilization threshold.
+                            Retrieved operational context indicates that approved log cleanup can reduce disk pressure.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="section-head">
+                        <div>
+                            <h3 class="font-semibold">Retrieved Playbook</h3>
+                            <p class="text-xs text-slate-500 mt-1">Semantic RAG Match</p>
+                        </div>
+                        <span class="text-xs text-emerald-400">0.92 similarity</span>
+                    </div>
+                    <div class="p-6">
+                        <div class="flex gap-3">
+                            <div class="icon-box purple"><i data-lucide="book-open"></i></div>
+                            <div>
+                                <h4 class="font-medium">PostgreSQL Disk Utilization Cleanup</h4>
+                                <p class="text-xs text-slate-500 mt-1">playbook-04</p>
+                            </div>
+                        </div>
+                        <div class="mt-5 space-y-3">
+                            <div class="step"><span>01</span><p>Check current disk utilization.</p></div>
+                            <div class="step"><span>02</span><p>Identify eligible old database logs.</p></div>
+                            <div class="step"><span>03</span><p>Execute only the approved cleanup operation.</p></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="space-y-6">
+                <div class="card border-amber-500/20">
+                    <div class="section-head">
+                        <div class="flex items-center gap-3">
+                            <div class="icon-box amber"><i data-lucide="user-round-check"></i></div>
+                            <div><h3 class="font-semibold text-sm">Human Approval Required</h3><p class="text-xs text-slate-500">Critical action blocked</p></div>
+                        </div>
+                    </div>
+                    <div class="p-5">
+                        <div class="rounded-lg bg-slate-950 border border-slate-800 p-4">
+                            <p class="label">Proposed Action</p>
+                            <p class="font-medium mt-1">CLEAN_OLD_LOGS</p>
+                            <p class="label mt-4">Target</p>
+                            <p class="small-value mt-1">postgresql-db-01</p>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3 mt-4">
+                            <button id="approveBtn" class="btn-green">Approve</button>
+                            <button id="denyBtn" class="btn-dark">Deny</button>
+                        </div>
+                        <p id="approvalMessage" class="text-xs text-slate-500 mt-4"></p>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="section-head"><h3 class="font-semibold text-sm">Incident Timeline</h3></div>
+                    <div class="p-5 space-y-5">
+                        <div class="timeline done"><span>✓</span><div><p>Alert received</p><small>19:00:02</small></div></div>
+                        <div class="timeline done"><span>✓</span><div><p>Playbook retrieved</p><small>19:00:03</small></div></div>
+                        <div class="timeline done"><span>✓</span><div><p>Risk assessment completed</p><small>19:00:03</small></div></div>
+                        <div class="timeline waiting"><span>⏸</span><div><p>Waiting for human approval</p><small>Critical action is blocked</small></div></div>
+                        <div class="timeline muted"><span>○</span><div><p>Execute remediation</p><small>Blocked until approval</small></div></div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="section-head"><h3 class="font-semibold text-sm">System Components</h3></div>
+                    <div class="p-5 space-y-4">
+                        <div class="component"><span>FastAPI Gateway</span><b>ONLINE</b></div>
+                        <div class="component"><span>RAG Engine</span><b>ONLINE</b></div>
+                        <div class="component"><span>Agent Supervisor</span><b>ONLINE</b></div>
+                        <div class="component"><span>Human Gate</span><b class="text-amber-400">WAITING</b></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="/ui/app.js"></script>
+</body>
+</html>
