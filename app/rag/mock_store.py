@@ -1,7 +1,6 @@
 import re
 
-# Simulated Vector Database Document Store
-# In production, these text snippets would be embedded as vectors in Qdrant
+
 PLAYBOOKS = [
     {
         "id": "playbook-01",
@@ -46,6 +45,26 @@ PLAYBOOKS = [
             "1. Run lifecycle rules to transition files older than 30 days to S3 Glacier.\n"
             "2. Check for incomplete multipart uploads and purge them using AWS CLI: 'aws s3api abort-multipart-upload'.\n"
             "3. Temporarily increase the bucket quota limit if business requirements demand active files."
+        )
+    },
+        {
+        "id": "playbook-05",
+        "service": "PostgreSQL-Database",
+        "topic": "Database Disk Capacity Exhaustion",
+        "tags": [
+            "postgresql",
+            "database",
+            "disk",
+            "disk_utilization",
+            "capacity",
+            "full",
+            "95"
+        ],
+        "solution": (
+            "1. Check database disk usage and identify the largest log files.\n"
+            "2. Verify that the identified logs are safe to remove before deletion.\n"
+            "3. Remove only eligible old log files to recover disk space.\n"
+            "4. Recheck disk utilization and confirm the database has returned to a safe level."
         )
     }
 ]

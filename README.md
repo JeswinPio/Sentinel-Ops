@@ -16,3 +16,57 @@ Python 3.12 · FastAPI · LangGraph/LangChain · Qdrant · PostgreSQL · Langfus
 - `Sentinel-Ops Production Implementation Specification.docx`: base system spec (RESEARCH_PLAN.md overrides it where they conflict)
 - [GEMINI_CONTEXT.md](GEMINI_CONTEXT.md): AI-assistant anchor context and invariants
 - [MLops_dev.txt](MLops_dev.txt): week-by-week timeline
+- [docs/SESSION_CONTEXT_phase0-1.md](docs/SESSION_CONTEXT_phase0-1.md): what was built in Phase 0/1
+
+## Layout
+
+```
+app/
+  main.py            FastAPI gateway (/ingest, /logs, /dashboard, /ui)
+  config.py          Environment-based settings (see .env.example)
+  agents/graph.py    LangGraph workflow with interrupt_before HITL checkpoint
+  rag/mock_store.py  Keyword playbook store (replaced by Qdrant in Phase 2)
+frontend/            Static control-center UI served at /ui
+scripts/
+  generate_alerts.py     Mock alert stream
+  agent_supervisor_cli.py  Terminal supervisor demo
+tests/               pytest suite (unit, agent, api)
+```
+
+## Run locally
+
+```bash
+python -m venv .venv
+.venv\Scripts\activate          # Windows; use source .venv/bin/activate elsewhere
+pip install -r requirements-dev.txt
+copy .env.example .env          # then fill in values
+```
+
+### Dependencies (PostgreSQL + Qdrant)
+
+With Docker: `docker compose up -d` starts both with the credentials in `.env.example`.
+
+With a native PostgreSQL install instead, create the role and database once (as the `postgres` superuser):
+
+```sql
+CREATE ROLE sentinel LOGIN PASSWORD 'sentinel';
+CREATE DATABASE sentinel_ops OWNER sentinel;
+```
+
+Then apply the schema:
+
+```bash
+alembic upgrade head
+```
+
+### Start
+
+```bash
+python -m uvicorn app.main:app --reload
+python scripts/generate_alerts.py --scenario database_disk --count 1
+pytest                          # uses a temporary SQLite DB; no services needed
+```
+
+- Dashboard: http://127.0.0.1:8000/dashboard
+- Liveness: `/health` · Readiness (checks PostgreSQL + Qdrant): `/ready`
+- `/ingest` returns 503 when PostgreSQL is unreachable, so no alert is silently dropped.
