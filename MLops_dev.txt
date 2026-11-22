@@ -1,53 +1,48 @@
-Sentinel-Ops - Cloud-Native Autonomous Agent Fleet with LLMOps Guardrails
+Sentinel-Ops - Verifiable and Injection-Resilient Agentic Incident Remediation
+Domain: Cybersecurity. Full details: RESEARCH_PLAN.md (master plan v2, updated 2026-11-19)
 
+Project Plan & Timeline (8 weeks, starting 2026-11-23; shift dates if your deadline differs)
 
-🗺️ Project Plan & Timeline (Accelerated Blueprint)
-This schedule is optimized for an intensive implementation cycle, emphasizing building the MVP first and wrapping it with enterprise MLOps guardrails.
+Already done (preliminary): FastAPI ingestion (app.py), Qdrant playbook retrieval
+(vector_db.py), mock generator (generator.py), LangGraph prototype with
+interrupt_before HITL (langgraph_workflow.py), dashboard started (frontend/).
+Note: test_langgraph_workflow.py has no test functions yet.
 
-[Week 1-2] ──► [Week 3-4] ──► [Week 5-6] ──► [Week 7-8]
-Foundations     Agent Logic   LLMOps/Eval    Cloud UI & Demo
-📅 Weeks 1–2: Infrastructure Foundations & Data Ingestion
-Deliverables: Working data pipeline, environment containerization, and repository setup.
+Week 1 (Nov 23 - Nov 29): Foundation + Threat Model
+- Spec layout; migrate /ingest to /api/v1/alerts; PostgreSQL models; first real tests.
+- docs/THREAT_MODEL.md (goals G1-G6) and the related-work matrix; read and verify every citation.
 
-Tasks:
+Week 2 (Nov 30 - Dec 6): Real Lab + Signed Contracts
+- lab/ docker-compose: postgres, webapp, nginx, prometheus, exporters, alertmanager -> HMAC webhook.
+- Chaos scripts (fill_disk, leak_memory, break_config, cpu_spike).
+- Contract schema + Ed25519 signing tool; signed playbooks in Qdrant; refuse tampered contracts.
 
-Initialize the Python project structure and configure environment variables securely.
+Week 3 (Dec 7 - Dec 13): Core Graph + Enforcement
+- Quarantined extractor LLM (no tools) -> typed Tainted fields -> planner LLM.
+- Taint + contract enforcer; risk taken from the contract; HITL via interrupt_before.
+- Tool registry on the Docker SDK (no shell). Disk-full fixed on the real lab with approval.
 
-Write a mock log-generator script to stream simulated server alerts into an API endpoint using FastAPI.
+Week 4 (Dec 14 - Dec 20): Verification, Rollback, Audit, Property Tests
+- PromQL post-conditions; snapshots; rollback -> escalate.
+- Hash-chained audit + /api/v1/audit/verify.
+- Hypothesis property tests for P1-P6 (10k+ generated plans, 0 violations).
 
-Set up a managed vector database instance (e.g., Qdrant Cloud or Pinecone free tier) and populate it with sample infrastructure troubleshooting playbooks.
+Week 5 (Dec 21 - Dec 27): Benchmark + Baselines
+- Scenario YAML schema; mutation generator (10 seeds x 5 positions x 6 transforms).
+- Public-derived attacks, poisoned playbooks, failed-fix cases, red-team held-out set.
+- Baseline configs B0 naive / B1 prompt-hardened / B2 input filter; `make benchmark`.
 
-📅 Weeks 3–4: Multi-Agent Logic & LangGraph State Machine
-Deliverables: A functioning autonomous loop that can parse logs, retrieve help context, and safely generate text fixes.
+Week 6 (Dec 28 - Jan 3): Dashboard + LLMOps + CI
+- Minimal dashboard: incidents, approvals, blocked attacks with taint trace, audit.
+- Langfuse traces, tokens, cost.
+- CI T1 (unit + property, hard gate) and T2 (cassette replay benchmark, hard gate).
+- Demo PR that removes the HITL/taint check must turn CI red.
 
-Tasks:
+Week 7 (Jan 4 - Jan 10): Experiments + Results
+- Main comparison, ablation heatmap, held-out red team, overhead, live variance (3 runs).
+- 95% Wilson CIs; charts: ASR vs benign success, ablation heatmap, overhead.
 
-Define the core AgentState object to store ongoing conversation histories, current log inputs, and generated fixes.
-
-Build the LangGraph topology: create a Triage Node to parse inputs, an Analysis Node linked to your vector DB, and a conditional router node.
-
-Implement Human-in-the-Loop (HITL) interruption logic—forcing the state machine to pause and save its state whenever the agent attempts to output a critical remediation script.
-
-📅 Weeks 5–6: LLMOps Integration & Automated Evaluation Suite
-Deliverables: Live performance telemetry dashboards and a functional GitHub Actions validation test.
-
-Tasks:
-
-Connect the backend execution runtime to an observability platform (LangSmith or Langfuse) to map nested agent tool calls.
-
-Compile a deterministic test dataset consisting of 30 explicit infrastructure problem scenarios paired with ideal, expected baseline criteria.
-
-Develop an evaluation script (using metrics like correctness and hallucination detection) that scores the agent's graph performance automatically.
-
-Integrate this script as a pre-merge check inside GitHub Actions to enforce quality control before code updates.
-
-📅 Weeks 7–8: Minimalist UI, Cloud Deployment & Validation
-Deliverables: Hosted cloud platform, interactive web control panel, and a finalized project thesis.
-
-Tasks:
-
-Build a responsive, single-page UI using Streamlit or an Angular template containing a chat area for real-time human approvals and an embedded live telemetry panel.
-
-Containerize the application layers via Docker and host them using serverless container runtimes (such as AWS ECS Fargate or Google Cloud Run).
-
-Execute load testing to document token-saving efficiency metrics, collect your execution diagrams, and format your university presentation deck.
+Week 8 (Jan 11 - Jan 17): Deploy, Demo, Paper
+- Docker image; deploy to Cloud Run only.
+- 3-act demo video: verified real fix -> injection blocked with taint trace -> failed fix rolled back.
+- Report + short paper draft (student/workshop track).
