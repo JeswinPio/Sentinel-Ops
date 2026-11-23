@@ -8,6 +8,7 @@ from pydantic import BaseModel
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.audit import router as audit_router
 from app.api.health import router as health_router
 from app.config import FRONTEND_DIR, get_settings
 from app.database.connection import get_session
@@ -28,6 +29,7 @@ async def lifespan(_: FastAPI):
 app = FastAPI(title="Sentinel-Ops Gateway", description="Log Ingestion Gateway with Integrated RAG & Observability Control Center", lifespan=lifespan)
 app.add_middleware(RequestIdMiddleware)
 app.include_router(health_router)
+app.include_router(audit_router)
 app.mount("/ui", StaticFiles(directory=FRONTEND_DIR, html=True), name="frontend")
 # Initialize our simulated vector database
 vector_store = MockVectorDB()
@@ -69,7 +71,7 @@ async def ingest_log(log: SystemLog, session: AsyncSession = Depends(get_session
             source="ingest",
             raw_payload=log_data,
         )
-        AuditRepository(session).append(
+        await AuditRepository(session).append(
             actor="system:ingest",
             action="incident.created",
             incident_id=incident.id,

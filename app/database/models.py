@@ -133,6 +133,10 @@ class AuditLog(Base):
     # "metadata" is reserved on declarative classes, so the attribute is named details.
     details: Mapped[dict] = mapped_column("metadata", JSON, default=dict)
     timestamp: Mapped[datetime] = mapped_column(TZDateTime, default=utcnow)
+    # Hash chain (app/security/audit.py). Nullable only so the migration works on tables with older rows.
+    seq: Mapped[int | None] = mapped_column(Integer, unique=True, index=True)
+    prev_hash: Mapped[str | None] = mapped_column(String(64))
+    hash: Mapped[str | None] = mapped_column(String(64))
 
 
 class AgentRun(Base):
