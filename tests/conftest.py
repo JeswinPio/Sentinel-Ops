@@ -3,7 +3,12 @@ import tempfile
 from pathlib import Path
 
 import pytest
+from hypothesis import settings
 from sqlalchemy import create_engine
+
+# HYPOTHESIS_PROFILE=ci for the 10,000-plan run in acceptance criterion 6.
+settings.register_profile("ci", max_examples=10_000, deadline=None)
+settings.load_profile(os.getenv("HYPOTHESIS_PROFILE", "default"))
 
 # Point the app at a throwaway SQLite file and an unreachable Qdrant before any app module is imported.
 _DB_PATH = Path(tempfile.mkdtemp(prefix="sentinel-tests-")) / "test.db"

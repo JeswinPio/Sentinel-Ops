@@ -1,0 +1,27 @@
+# Unsigned example contract from RESEARCH_PLAN.md §5.4; tests sign it with a throwaway key.
+playbook_id: pg-disk-full
+version: 3
+applies_to: { service_type: postgresql, alert_pattern: "disk_utilization_percent" }
+preconditions:
+  - promql: 'disk_used_percent{instance="postgres"}'
+    op: ">="
+    value: 90
+allowed_actions:
+  - tool: cleanup_old_logs
+    args:
+      container: ["lab-postgres"]
+      path: ["/var/log/postgresql"]
+      older_than_days: { min: 3, max: 30 }
+    risk: LOW
+  - tool: restart_container
+    args: { container: ["lab-postgres"] }
+    risk: CRITICAL
+postconditions:
+  - promql: 'disk_used_percent{instance="postgres"}'
+    op: "<"
+    value: 80
+    within_seconds: 120
+rollback:
+  - tool: restore_snapshot
+    args: { snapshot: "pre_remediation" }
+on_postcondition_fail: [rollback, escalate]

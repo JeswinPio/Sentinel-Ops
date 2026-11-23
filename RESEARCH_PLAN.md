@@ -352,16 +352,23 @@ Rule: no "Could" item starts until every "Must" passes its done-check.
 
 ## 8. Current status (preliminary work done)
 
+Updated 2026-11-23. 65 tests pass (`pytest`); property tests pass at 10,000 examples (`HYPOTHESIS_PROFILE=ci pytest tests/property`).
+
 | Component | Status |
 |---|---|
-| `app.py`: FastAPI ingestion (`/ingest`, `/logs`, `/dashboard`) | Prototype done. Migrate to `/api/v1/alerts` |
-| `vector_db.py`: Qdrant playbook retrieval | Prototype done. Add signed contracts |
-| `generator.py`: mock alert generator | Done. Evolve into the attack mutation generator |
-| `langgraph_workflow.py`: ingest/triage/analysis/risk routing/`interrupt_before` HITL/simulated execution/escalation | Prototype done. Add quarantine, enforcer, verify and rollback nodes; take risk from the contract |
-| `test_langgraph_workflow.py` | **Exists but contains no test functions** |
-| `frontend/`: dashboard (HTML/CSS/JS) | Started |
-| PostgreSQL, Langfuse, CI, Docker, lab | Not started |
-| Security layers, contracts, taint, benchmark, threat model | Not started |
+| `app/main.py`: FastAPI ingestion (`/ingest`, `/logs`, `/dashboard`) | Persists alert + incident + audit entry; 503 when DB down. Migrate to `/api/v1/alerts` |
+| `app/database/`: 7 tables, Alembic migrations, repositories | Done (Phase 1). Real PostgreSQL not yet tested |
+| `/health`, `/ready`, JSON logs, request IDs | Done (Phase 1) |
+| `app/rag/mock_store.py`: keyword playbook lookup | Prototype. Replace with Qdrant + signed contracts (Phase 4) |
+| `app/agents/graph.py`: LangGraph with `interrupt_before` HITL | Prototype with fixed rules, no LLM. Add quarantine, enforcer, verify, rollback (Phase 5) |
+| **L5** `app/security/taint.py`, `contracts.py` | **Done.** Strict-type allow-lists, ranges, exact argument sets, risk from contract |
+| **L6** `app/security/signing.py` | **Done.** Ed25519 over canonical JSON; `load_contract` verifies before parsing. Signing CLI and Qdrant wiring in Phase 4 |
+| **L9** `app/security/audit.py` + `GET /api/v1/audit/verify` | **Done.** Hash chain on `audit_logs` (migration `b3f1c2d4e5a6`), Postgres advisory lock for appends |
+| Property tests P1, P2, P5, P6 | **Done.** P3/P4 need the graph and verifier (Phases 5-6) |
+| `docs/THREAT_MODEL.md` | Draft v1 done; related-work matrix still to do |
+| `scripts/generate_alerts.py` | Done. Evolve into the attack mutation generator |
+| `frontend/` | Static, not wired to the API |
+| Qdrant, Langfuse, CI, Docker, lab, L1-L4, L7, benchmark | Not started |
 
 ---
 
